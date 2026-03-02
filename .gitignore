@@ -1,0 +1,262 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_root/
+media_root/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+.env.example
+.env.*.local
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pythonenv*/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+
+# Python
+*.py[cod]
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+pytest_cache/
+.coverage
+coverage.xml
+*.cover
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.hypothesis/
+.ruff_cache/
+
+# Django-specific
+*.db
+*.sqlite3
+static/
+staticfiles/
+media/
+uploads/
+
+# Secrets
+secrets.json
+secrets.yaml
+*.pem
+*.key
+*.crt
+
+# Database migrations
+migrations/
+!*/migrations/__init__.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# Sphinx
+docs/_build
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# profiling data
+*.prof
+
+# Testing
+.cache
+.pytest_cache/
+htmlcov/
+*.cover
+.hypothesis/
+.tox/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache
+pytestdebug.log
+
+# Translations
+*.mo
+*.pot
+
+# Django project specific
+!manage.py
+!requirements.txt
+!requirements/
+
+# VSCode settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.bak
+desktop.ini
+$RECYCLE.BIN/
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Project specific
+# Add your project-specific ignores below
+# staticfiles/
+# media/
+# uploads/
+# *.local.py
+
+# Backup files
+*.bak
+*.orig
+*.tmp
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+docker-compose*.yaml
+*.pid
+
+# Kubernetes
+*.kubeconfig
+*.kube
+*.k8s.yaml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+
+# Ansible
+*.retry
+ansible/inventory/*
+!ansible/inventory/example
+
+# SSL certificates
+*.crt
+*.key
+*.pem
+*.cert
+
+# PDF and document outputs
+*.pdf
+*.docx
+*.xlsx
+
+# Archive files
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Node modules (if you're using any frontend build tools)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment specific
+.env.production
+.env.staging
+.env.local
+.env.test
+
+# Custom ignores for your voting app
+# Uncomment and modify as needed
+# voter_photos/
+# election_docs/
+# temp_uploads/
+
+# Keep this file
+!.gitignore
+!.gitkeep

@@ -17,7 +17,7 @@
 
 <body class="bg-gray-50 min-h-screen">
   <header class="border-b border-gray-200 bg-white shadow-sm">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="w-[90%] mx-auto px-4 py-4 flex items-center justify-between">
       <div>
         <div class="text-lg font-bold text-green-700">Kakasa Voting Portal</div>
         <div class="text-xs text-gray-500">President • Vice President • Finance Secretary</div>
@@ -31,7 +31,7 @@
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
+  <main class="w-[90%] mx-auto px-4 py-8">
     {% if messages %}
       <div class="space-y-2 mb-6">
         {% for message in messages %}
@@ -65,7 +65,7 @@
   </main>
 
   <footer class="border-t border-gray-200 bg-white mt-12">
-    <div class="max-w-4xl mx-auto px-4 py-6 text-xs text-gray-500 flex items-center justify-between">
+    <div class="w-[90%] mx-auto px-4 py-6 text-xs text-gray-500 flex items-center justify-between">
       <div>© {% now "Y" %} Kakasa Association</div>
       <div class="flex items-center gap-1">
         <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
