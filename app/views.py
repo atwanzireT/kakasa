@@ -10,6 +10,31 @@ from .forms import CodeLoginForm, PhoneStartForm, OTPVerifyForm, SubmitBallotHel
 from .sms import send_sms
 
 
+# -----------------------------------------------------------------------------
+# Helpers
+# -----------------------------------------------------------------------------
+def _normalize_phone(phone: str) -> str:
+    """
+    Keep it simple and consistent.
+    If your forms already normalize (cleaned_phone), this is just extra safety.
+    """
+    return (phone or "").strip().replace(" ", "")
+
+
+def _phone_already_voted(election: Election, phone: str) -> bool:
+    """
+    ✅ A phone is considered "used" if it has ANY vote in this election.
+    So we block OTP sending/verification for that phone.
+    """
+    phone = _normalize_phone(phone)
+    if not phone:
+        return False
+    return Vote.objects.filter(election=election, voter_phone=phone).exists()
+
+
+# -----------------------------------------------------------------------------
+# Views
+# -----------------------------------------------------------------------------
 def home(request):
     # Show open elections + all elections list
     all_elections = Election.objects.all().order_by("-created_at")
@@ -57,16 +82,25 @@ def login(request, election_id: int):
     if request.method == "POST":
         form = PhoneStartForm(request.POST, election=election)
         if form.is_valid():
+            # IMPORTANT: use cleaned_phone (your form already prepares it)
+            phone = _normalize_phone(getattr(form, "cleaned_phone", "") or form.cleaned_data.get("phone", ""))
+
+            # ✅ NEW RULE: If phone already voted, DO NOT send OTP
+            if _phone_already_voted(election, phone):
+                messages.error(request, "This phone number has already voted in this election. OTP not sent.")
+                return render(request, "app/login_phone.html", {"election": election, "form": form})
+
+            # create otp and send
             otp = form.create_otp()
             message = f"Kakasa Voting OTP: {otp.code}. Expires in 5 minutes."
-            ok, resp = send_sms(form.cleaned_phone, message)
+            ok, resp = send_sms(phone, message)
 
             if not ok:
                 messages.error(request, f"Failed to send OTP. {resp}")
                 return render(request, "app/login_phone.html", {"election": election, "form": form})
 
             messages.success(request, "OTP sent. Enter the code to continue.")
-            return redirect("verify_phone_otp", election_id=election.id, phone=form.cleaned_phone)
+            return redirect("verify_phone_otp", election_id=election.id, phone=phone)
     else:
         form = PhoneStartForm(election=election)
 
@@ -80,14 +114,29 @@ def verify_phone_otp(request, election_id: int, phone: str):
         messages.error(request, "Voting is not open for this election.")
         return redirect("home")
 
+    phone = _normalize_phone(phone)
+
+    # ✅ Extra protection: if phone already voted, block verification too
+    if _phone_already_voted(election, phone):
+        messages.error(request, "This phone number has already voted in this election.")
+        return redirect("login", election_id=election.id)
+
     if request.method == "POST":
         form = OTPVerifyForm(request.POST, election=election)
         if form.is_valid():
+            # Ensure the phone in the form is same normalized phone
+            posted_phone = _normalize_phone(form.cleaned_data.get("phone", ""))
+
+            # ✅ Block if posted phone already voted (double safety)
+            if _phone_already_voted(election, posted_phone):
+                messages.error(request, "This phone number has already voted in this election.")
+                return redirect("login", election_id=election.id)
+
             otp = form.otp_obj
             otp.is_used = True
             otp.save(update_fields=["is_used"])
 
-            session = VotingSession.create_for_phone(phone=form.cleaned_data["phone"], election=election, minutes=30)
+            session = VotingSession.create_for_phone(phone=posted_phone, election=election, minutes=30)
             return redirect("ballot", token=session.token)
     else:
         form = OTPVerifyForm(election=election, initial={"phone": phone})
@@ -108,8 +157,7 @@ def ballot(request, token: str):
     position_blocks = []
     for pos in positions:
         candidates = list(
-            Candidate.objects.filter(election=election, position=pos, is_active=True)
-            .order_by("full_name")
+            Candidate.objects.filter(election=election, position=pos, is_active=True).order_by("full_name")
         )
 
         # attach vote counts
@@ -117,15 +165,12 @@ def ballot(request, token: str):
             c.vote_count = Vote.objects.filter(election=election, position=pos, candidate=c).count()
 
         # find existing vote for this position (so radio pre-check works)
-        existing_vote = None
         if session.voter_id:
             existing_vote = Vote.objects.filter(election=election, position=pos, voter=session.voter).first()
         else:
             existing_vote = Vote.objects.filter(election=election, position=pos, voter_phone=session.phone).first()
 
-        position_blocks.append(
-            {"position": pos, "candidates": candidates, "existing_vote": existing_vote}
-        )
+        position_blocks.append({"position": pos, "candidates": candidates, "existing_vote": existing_vote})
 
     return render(
         request,
