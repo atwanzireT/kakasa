@@ -64,9 +64,16 @@ class Position(models.Model):
         PRESIDENT = "president", "President"
         VICE_PRESIDENT = "vice_president", "Vice President"
         FINANCE = "finance", "Finance Secretary"
+        SPEAKER = "speaker", "Speaker"
+        SECRETRY_GENERAL = "secretary_general", "Secretary General"
+        TREASURER = "treasurer", "Treasurer"
+        PROJECT_MINISTER = "project_minister", "Project Minister"
+        CULTURE_MINISTER = "culture_minister", "Culture Minister"
+        SPORTS_MINISTER = "sports_minister", "Sports Minister"
+        WOMEN_AFFAIRS_MINISTER = "women_affairs_minister", "Women Affairs Minister"
 
     election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name="positions")
-    name = models.CharField(max_length=20, choices=Name.choices)
+    name = models.CharField(max_length=50, choices=Name.choices)
     sort_order = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
