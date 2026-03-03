@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -131,3 +134,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Firebase Settings
+FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(BASE_DIR, "secrets", "firebase-service-account.json")
+FIREBASE_AUTH_ENABLED = True
+YOOLA_SMS_API_KEY = os.environ.get("YOOLA_SMS_API_KEY")

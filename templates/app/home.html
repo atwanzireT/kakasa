@@ -1,158 +1,136 @@
-<!-- app/home.html -->
+<!-- templates/app/home.html -->
 {% extends "app/base.html" %}
-
 {% block title %}Home • Kakasa Voting{% endblock %}
 
 {% block content %}
-  <div class="space-y-6">
-    <!-- Welcome Header -->
-    <div class="border-b border-gray-200 pb-4">
-      <h1 class="text-2xl font-bold text-green-700">Welcome to Kakasa Voting</h1>
-      <p class="text-sm text-gray-600 mt-1">Cast your vote securely and anonymously</p>
+<div class="space-y-6">
+  <div class="border-b border-gray-200 pb-4">
+    <h1 class="text-2xl font-bold text-green-700">Welcome to Kakasa Voting</h1>
+    <p class="text-sm text-gray-600 mt-1">Select an open election to proceed</p>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold text-green-700">Available Elections</h2>
+        <p class="text-xs text-gray-500 mt-1">Only open elections can be voted on</p>
+      </div>
+      <span class="inline-flex items-center px-2.5 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
+        {{ open_elections|length }} Open
+      </span>
     </div>
 
-    <!-- Elections Section -->
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      <!-- Section Header -->
-      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="font-semibold text-green-700">Available Elections</h2>
-            <p class="text-xs text-gray-500 mt-1">Select an open election to proceed</p>
-          </div>
-          <span class="inline-flex items-center px-2.5 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
-            {{ open_elections|length }} Open
-          </span>
-        </div>
-      </div>
+    {% if open_elections %}
+      <div class="divide-y divide-gray-100">
+        {% for e in open_elections %}
+          <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <h3 class="font-semibold text-gray-900">{{ e.name }}</h3>
 
-      <!-- Elections List -->
-      {% if open_elections %}
-        <div class="divide-y divide-gray-100">
-          {% for e in open_elections %}
-            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
-              <div class="flex items-start justify-between gap-4">
-                <!-- Election Details -->
-                <div class="flex-1">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                    <h3 class="font-semibold text-gray-900">{{ e.name }}</h3>
-                  </div>
-                  
-                  <!-- Status & Timing -->
-                  <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                    <span class="inline-flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Status: <span class="font-medium text-green-600">{{ e.status|title }}</span>
+                  {% if e.access_mode == "code_only" %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                      Code Login
                     </span>
-                    
-                    {% if e.start_at %}
-                      <span class="inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Starts: {{ e.start_at|date:"M j, Y" }}
-                      </span>
-                    {% endif %}
-                    
-                    {% if e.end_at %}
-                      <span class="inline-flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Ends: {{ e.end_at|date:"M j, Y" }}
-                      </span>
-                    {% endif %}
-                  </div>
-
-                  <!-- Access Badges -->
-                  <div class="mt-3 flex flex-wrap gap-2">
-                    <!-- Access Mode Badge -->
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      {{ e.get_access_mode_display }}
+                  {% elif e.access_mode == "phone_otp" %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                      Phone OTP
                     </span>
-
-                    <!-- Email Domains (if applicable) -->
-                    {% if e.access_mode == "any_email_domain" and e.allowed_email_domains %}
-                      <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Domains: {{ e.allowed_email_domains }}
-                      </span>
-                    {% endif %}
-
-                    <!-- OTP Required Badge -->
-                    {% if e.require_email_otp and e.access_mode != "code_only" %}
-                      <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-100 text-yellow-600 text-xs font-medium rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        OTP Required
-                      </span>
-                    {% endif %}
-                  </div>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                      Login
+                    </span>
+                  {% endif %}
                 </div>
 
-                <!-- Vote Button -->
-                <a href="{% url 'login' election_id=e.id %}" 
-                   class="shrink-0 px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-semibold rounded-lg transition-colors duration-200 inline-flex items-center gap-2 group">
-                  <span>Vote Now</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <!-- No Elections State -->
-        <div class="p-12 text-center">
-          <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-1">No Open Elections</h3>
-          <p class="text-sm text-gray-500 max-w-sm mx-auto">
-            There are no active elections at the moment. Please check back later.
-          </p>
-        </div>
-      {% endif %}
-    </div>
+                <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  <span class="inline-flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Status:
+                    <span class="font-medium text-green-600">
+                      {{ e.get_status_display }}
+                    </span>
+                  </span>
 
-    <!-- Recent Elections Preview (Optional) -->
-    {% if all_elections and all_elections|length > 0 %}
+                  {% if e.start_at %}
+                    <span class="inline-flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Starts: {{ e.start_at|date:"M j, Y" }}
+                    </span>
+                  {% endif %}
+
+                  {% if e.end_at %}
+                    <span class="inline-flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Ends: {{ e.end_at|date:"M j, Y" }}
+                    </span>
+                  {% endif %}
+                </div>
+
+                <div class="mt-3 text-xs text-gray-500">
+                  Votes: <span class="font-semibold text-gray-800">{{ e.total_votes }}</span> •
+                  Unique voters: <span class="font-semibold text-gray-800">{{ e.unique_voters }}</span>
+                </div>
+              </div>
+
+              <a href="{% url 'login' e.id %}"
+                 class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-4 py-2 rounded-lg transition-all duration-200 group">
+                <span>Open</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="p-12 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-1">No Open Elections</h3>
+        <p class="text-sm text-gray-500 max-w-sm mx-auto">There are no active elections at the moment. Please check back later.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if all_elections and all_elections|length > 0 %}
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
         <h2 class="font-semibold text-green-700">Recent Elections</h2>
       </div>
       <div class="divide-y divide-gray-100">
-        {% for e in all_elections|slice:":5" %}
+        {% for e in all_elections|slice:":8" %}
           {% if e not in open_elections %}
-          <div class="p-4 hover:bg-gray-50 transition-colors">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="font-medium text-gray-900">{{ e.name }}</div>
-                <div class="text-xs text-gray-500 mt-1">{{ e.created_at|date:"F j, Y" }}</div>
+            <div class="p-4 hover:bg-gray-50 transition-colors">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-gray-900">{{ e.name }}</div>
+                  <div class="text-xs text-gray-500 mt-1">{{ e.created_at|date:"F j, Y" }}</div>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                  {% if e.status == 'closed' %}bg-gray-100 text-gray-600
+                  {% elif e.status == 'open' %}bg-green-100 text-green-700
+                  {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                  {{ e.get_status_display }}
+                </span>
               </div>
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
-                {% if e.status == 'closed' %}bg-gray-100 text-gray-600
-                {% else %}bg-yellow-100 text-yellow-600{% endif %}">
-                {{ e.get_status_display }}
-              </span>
             </div>
-          </div>
           {% endif %}
         {% endfor %}
       </div>
     </div>
-    {% endif %}
-  </div>
+  {% endif %}
+</div>
 {% endblock %}

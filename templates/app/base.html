@@ -1,5 +1,4 @@
-<!-- base.html -->
-
+<!-- templates/app/base.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -9,29 +8,30 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-    }
+    body { font-family: 'Inter', sans-serif; }
+    .animate-pulse-slow { animation: pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
   </style>
+  {% block extra_head %}{% endblock %}
 </head>
 
 <body class="bg-gray-50 min-h-screen">
   <header class="border-b border-gray-200 bg-white shadow-sm">
-    <div class="w-[90%] mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="w-[92%] mx-auto px-4 py-4 flex items-center justify-between">
       <div>
         <div class="text-lg font-bold text-green-700">Kakasa Voting Portal</div>
-        <div class="text-xs text-gray-500">President • Vice President • Finance Secretary</div>
+        <div class="text-xs text-gray-500">Secure • Fast • Anonymous</div>
       </div>
       <a href="{% url 'home' %}" class="text-sm text-gray-600 hover:text-green-600 transition-colors duration-200 flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
         Home
       </a>
     </div>
   </header>
 
-  <main class="w-[90%] mx-auto px-4 py-8">
+  <main class="w-[92%] mx-auto px-4 py-8">
     {% if messages %}
       <div class="space-y-2 mb-6">
         {% for message in messages %}
@@ -65,7 +65,7 @@
   </main>
 
   <footer class="border-t border-gray-200 bg-white mt-12">
-    <div class="w-[90%] mx-auto px-4 py-6 text-xs text-gray-500 flex items-center justify-between">
+    <div class="w-[92%] mx-auto px-4 py-6 text-xs text-gray-500 flex items-center justify-between">
       <div>© {% now "Y" %} Kakasa Association</div>
       <div class="flex items-center gap-1">
         <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
@@ -73,5 +73,7 @@
       </div>
     </div>
   </footer>
+
+  {% block extra_js %}{% endblock %}
 </body>
 </html>
