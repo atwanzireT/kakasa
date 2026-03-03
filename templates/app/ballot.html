@@ -13,7 +13,9 @@
           <span class="font-medium">Election:</span> {{ election.name }}<br>
           <span class="font-medium">Voter:</span>
           <span class="text-green-600 font-semibold">
-            {% if session.voter %}{{ session.voter.full_name }}{% else %}{{ session.email }}{% endif %}
+            {% if session.voter %}{{ session.voter.full_name }}{% else %}
+              {% if session.phone %}{{ session.phone }}{% else %}{{ session.email }}{% endif %}
+            {% endif %}
           </span>
         </p>
       </div>
@@ -83,13 +85,9 @@
 
         <div class="p-6">
           {% if block.candidates %}
-            <!-- Cards grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {% for c in block.candidates %}
-                <label
-                  class="group relative cursor-pointer rounded-2xl border border-gray-200 bg-white hover:border-green-300 hover:shadow-sm transition overflow-hidden"
-                  data-card="1"
-                >
+                <label class="group relative cursor-pointer rounded-2xl border border-gray-200 bg-white hover:border-green-300 hover:shadow-sm transition overflow-hidden">
                   <!-- selection glow -->
                   <div class="absolute inset-0 pointer-events-none opacity-0 group-has-[:checked]:opacity-100 transition">
                     <div class="absolute inset-0 ring-2 ring-green-400/40"></div>
@@ -99,8 +97,8 @@
                     <!-- Avatar -->
                     <div class="shrink-0">
                       <div class="h-16 w-16 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
-                        {% if c.photo %}
-                          <img src="{{ c.photo.url }}" alt="{{ c.full_name }}" class="h-full w-full object-cover" />
+                        {% if c.image_url %}
+                          <img src="{{ c.image_url }}" alt="{{ c.full_name }}" class="h-full w-full object-cover" />
                         {% else %}
                           <div class="h-full w-full flex items-center justify-center text-gray-700 font-bold">
                             {{ c.full_name|slice:":1" }}
@@ -108,7 +106,6 @@
                         {% endif %}
                       </div>
 
-                      <!-- hidden radio but still accessible -->
                       <input
                         type="radio"
                         name="choice_{{ block.position.id }}"
@@ -126,25 +123,31 @@
                             {{ c.full_name }}
                           </div>
 
+                          {% if c.university or c.study_year %}
+                            <div class="text-xs text-gray-600 mt-1">
+                              {% if c.university %}<span class="font-semibold">{{ c.university }}</span>{% endif %}
+                              {% if c.university and c.study_year %} • {% endif %}
+                              {% if c.study_year %}Year {{ c.study_year }}{% endif %}
+                            </div>
+                          {% endif %}
+
                           {% if c.bio_short %}
-                            <div class="text-xs text-gray-600 mt-1 line-clamp-2">
+                            <div class="text-xs text-gray-600 mt-2 line-clamp-2">
                               {{ c.bio_short }}
                             </div>
                           {% else %}
-                            <div class="text-xs text-gray-500 mt-1">
+                            <div class="text-xs text-gray-500 mt-2">
                               Tap “View profile” to see more details.
                             </div>
                           {% endif %}
                         </div>
 
-                        <!-- Votes -->
                         <div class="shrink-0 text-right">
                           <div class="text-[10px] text-gray-500">Votes</div>
                           <div class="text-sm font-bold text-gray-900">{{ c.vote_count }}</div>
                         </div>
                       </div>
 
-                      <!-- Actions row -->
                       <div class="mt-3 flex items-center justify-between gap-2">
                         <span class="inline-flex items-center gap-2 text-xs text-gray-600">
                           <span class="h-2 w-2 rounded-full bg-gray-300 group-has-[:checked]:bg-green-500"></span>
@@ -157,9 +160,11 @@
                           data-open-modal="1"
                           data-name="{{ c.full_name|escape }}"
                           data-position="{{ block.position.get_name_display|escape }}"
-                          data-bio="{% if c.bio_short %}{{ c.bio_short|escape }}{% else %}{% endif %}"
+                          data-bio="{% if c.bio %}{{ c.bio|escape }}{% elif c.bio_short %}{{ c.bio_short|escape }}{% else %}{% endif %}"
+                          data-university="{% if c.university %}{{ c.university|escape }}{% else %}{% endif %}"
+                          data-study-year="{% if c.study_year %}{{ c.study_year }}{% else %}{% endif %}"
                           data-votes="{{ c.vote_count }}"
-                          {% if c.photo %}data-photo="{{ c.photo.url }}"{% endif %}
+                          {% if c.image_url %}data-photo="{{ c.image_url }}"{% endif %}
                         >
                           View profile
                         </button>
@@ -167,7 +172,6 @@
                     </div>
                   </div>
 
-                  <!-- bottom bar when selected -->
                   <div class="h-1 bg-gray-100">
                     <div class="h-1 w-0 bg-green-500 transition-all duration-300 group-has-[:checked]:w-full"></div>
                   </div>
@@ -181,7 +185,6 @@
       </section>
     {% endfor %}
 
-    <!-- Submit -->
     <div class="flex flex-col sm:flex-row gap-3 justify-end">
       <a href="{% url 'home' %}" class="px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 text-center">
         Cancel
@@ -197,7 +200,7 @@
 <div id="profile-modal" class="fixed inset-0 z-50 hidden">
   <div class="absolute inset-0 bg-black/40" data-close-modal="1"></div>
 
-  <div class="relative mx-auto mt-10 w-[92%] max-w-xl">
+  <div class="relative mx-auto mt-10 w-[92%] max-w-2xl">
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
       <div class="p-5 flex items-start justify-between gap-4 border-b border-gray-100">
         <div class="flex items-center gap-3 min-w-0">
@@ -218,15 +221,30 @@
         </button>
       </div>
 
-      <div class="p-5 space-y-3">
+      <div class="p-5 space-y-4">
         <div class="flex items-center justify-between text-sm">
           <span class="text-gray-600">Current votes</span>
           <span id="modal-votes" class="font-bold text-gray-900"></span>
         </div>
 
-        <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
-          <div class="text-xs font-semibold text-gray-700 mb-2">Candidate details</div>
-          <p id="modal-bio" class="text-sm text-gray-700 leading-relaxed"></p>
+        <div class="rounded-xl bg-gray-50 border border-gray-200 p-4 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <div class="text-[11px] font-semibold text-gray-600">University</div>
+              <div id="modal-university" class="text-gray-900 font-semibold">—</div>
+            </div>
+            <div>
+              <div class="text-[11px] font-semibold text-gray-600">Study Year</div>
+              <div id="modal-study-year" class="text-gray-900 font-semibold">—</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-semibold text-gray-600 mb-2">Bio</div>
+            <div id="modal-bio"
+                 class="min-h-[140px] whitespace-pre-wrap rounded-xl bg-white border border-gray-200 p-3 text-sm text-gray-800 leading-relaxed">
+            </div>
+          </div>
         </div>
 
         <div class="text-xs text-gray-500">
@@ -246,7 +264,6 @@
 
 {% block extra_js %}
 <script>
-  // 15-minute countdown UI only (server still checks expiry)
   const totalSeconds = 15 * 60;
   let remaining = totalSeconds;
 
@@ -291,7 +308,7 @@
     if (remaining === 0) clearInterval(tick);
   }, 1000);
 
-  // Modal logic
+  // Modal
   const modal = document.getElementById("profile-modal");
   const modalName = document.getElementById("modal-name");
   const modalPosition = document.getElementById("modal-position");
@@ -299,6 +316,8 @@
   const modalVotes = document.getElementById("modal-votes");
   const modalPhoto = document.getElementById("modal-photo");
   const modalFallback = document.getElementById("modal-fallback");
+  const modalUniversity = document.getElementById("modal-university");
+  const modalStudyYear = document.getElementById("modal-study-year");
 
   function openModal(btn){
     const name = btn.dataset.name || "Candidate";
@@ -306,13 +325,18 @@
     const bio = btn.dataset.bio || "No additional details provided.";
     const votes = btn.dataset.votes || "0";
     const photo = btn.dataset.photo || "";
+    const university = btn.dataset.university || "—";
+    const studyYear = btn.dataset.studyYear || "";
 
     modalName.textContent = name;
     modalPosition.textContent = position;
-    modalBio.textContent = bio;
     modalVotes.textContent = votes;
 
-    // avatar
+    modalUniversity.textContent = (university && university.trim()) ? university : "—";
+    modalStudyYear.textContent = (studyYear && String(studyYear).trim()) ? `Year ${studyYear}` : "—";
+
+    modalBio.textContent = bio;
+
     if (photo){
       modalPhoto.src = photo;
       modalPhoto.classList.remove("hidden");
@@ -341,7 +365,6 @@
       openModal(openBtn);
       return;
     }
-
     if (e.target.closest("[data-close-modal='1']")) {
       e.preventDefault();
       closeModal();
@@ -355,7 +378,6 @@
 </script>
 
 <style>
-  /* Tailwind line clamp helper (no plugin needed) */
   .line-clamp-2{
     display:-webkit-box;
     -webkit-line-clamp:2;

@@ -59,13 +59,22 @@ class Position(models.Model):
         # For templates that call {{ position.get_name_display }}
         return self.name
 
-
 class Candidate(models.Model):
     election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name="candidates")
     position = models.ForeignKey(Position, on_delete=models.CASCADE, related_name="candidates")
 
     full_name = models.CharField(max_length=160)
+
+    # short preview (used on cards)
     bio_short = models.CharField(max_length=220, blank=True, null=True)
+
+    # full bio (used in modal)
+    bio = models.TextField(blank=True, null=True)
+
+    # ✅ new fields
+    image_url = models.URLField(blank=True, null=True)
+    university = models.CharField(max_length=160, blank=True, null=True)
+    study_year = models.PositiveSmallIntegerField(blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

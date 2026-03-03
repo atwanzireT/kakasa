@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from django.contrib import messages
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 
-from .models import Election, VotingSession, Position, Candidate, Vote
-from .forms import CodeLoginForm, PhoneStartForm, OTPVerifyForm, SubmitBallotHelper
+from .forms import CodeLoginForm, OTPVerifyForm, PhoneStartForm, SubmitBallotHelper
+from .models import Candidate, Election, Position, Vote, VotingSession
 from .sms import send_sms
 
 
@@ -15,16 +15,18 @@ from .sms import send_sms
 # -----------------------------------------------------------------------------
 def _normalize_phone(phone: str) -> str:
     """
-    Keep it simple and consistent.
-    If your forms already normalize (cleaned_phone), this is just extra safety.
+    Normalize phone to a consistent comparable string.
+    Must align with how Vote.voter_phone is stored.
     """
-    return (phone or "").strip().replace(" ", "")
+    phone = (phone or "").strip().replace(" ", "")
+    if phone.startswith("+"):
+        phone = phone[1:]
+    return phone
 
 
 def _phone_already_voted(election: Election, phone: str) -> bool:
     """
-    ✅ A phone is considered "used" if it has ANY vote in this election.
-    So we block OTP sending/verification for that phone.
+    Phone is considered "used" if it has any Vote in this election.
     """
     phone = _normalize_phone(phone)
     if not phone:
@@ -32,21 +34,41 @@ def _phone_already_voted(election: Election, phone: str) -> bool:
     return Vote.objects.filter(election=election, voter_phone=phone).exists()
 
 
+def _unique_voters_count(election: Election) -> int:
+    """
+    Accurate unique voter count:
+    - CODE_ONLY elections: unique voters by voter_id
+    - PHONE_OTP elections: unique voters by voter_phone
+    """
+    if election.access_mode == Election.AccessMode.CODE_ONLY:
+        return (
+            Vote.objects.filter(election=election, voter__isnull=False)
+            .values("voter_id")
+            .distinct()
+            .count()
+        )
+
+    # PHONE_OTP
+    return (
+        Vote.objects.filter(election=election, voter_phone__isnull=False)
+        .exclude(voter_phone="")
+        .values("voter_phone")
+        .distinct()
+        .count()
+    )
+
+
 # -----------------------------------------------------------------------------
 # Views
 # -----------------------------------------------------------------------------
 def home(request):
-    # Show open elections + all elections list
     all_elections = Election.objects.all().order_by("-created_at")
-    open_elections = [e for e in all_elections if e.is_open_now()]
+    open_elections = [e for e in all_elections if e.is_open_now()]  # uses Election.is_open_now() :contentReference[oaicite:4]{index=4}
 
-    # simple stats
+    # add stats
     for e in all_elections:
         e.total_votes = Vote.objects.filter(election=e).count()
-        e.unique_voters = (
-            Vote.objects.filter(election=e, voter_phone__isnull=False).values("voter_phone").distinct().count()
-            + Vote.objects.filter(election=e, voter__isnull=False).values("voter").distinct().count()
-        )
+        e.unique_voters = _unique_voters_count(e)
 
     return render(
         request,
@@ -62,10 +84,10 @@ def login(request, election_id: int):
         messages.error(request, "Voting is not open for this election.")
         return redirect("home")
 
-    # -----------------------------
+    # -------------------------------------------------------------------------
     # CODE ONLY LOGIN
-    # -----------------------------
-    if election.access_mode == Election.AccessMode.CODE_ONLY:
+    # -------------------------------------------------------------------------
+    if election.access_mode == Election.AccessMode.CODE_ONLY:  # :contentReference[oaicite:5]{index=5}
         if request.method == "POST":
             form = CodeLoginForm(request.POST, election=election)
             if form.is_valid():
@@ -76,21 +98,20 @@ def login(request, election_id: int):
 
         return render(request, "app/login_code.html", {"election": election, "form": form})
 
-    # -----------------------------
+    # -------------------------------------------------------------------------
     # PHONE OTP LOGIN
-    # -----------------------------
+    # -------------------------------------------------------------------------
     if request.method == "POST":
         form = PhoneStartForm(request.POST, election=election)
         if form.is_valid():
-            # IMPORTANT: use cleaned_phone (your form already prepares it)
+            # Prefer the form's normalized phone if present
             phone = _normalize_phone(getattr(form, "cleaned_phone", "") or form.cleaned_data.get("phone", ""))
 
-            # ✅ NEW RULE: If phone already voted, DO NOT send OTP
+            # ✅ if phone already voted, don't send OTP
             if _phone_already_voted(election, phone):
                 messages.error(request, "This phone number has already voted in this election. OTP not sent.")
                 return render(request, "app/login_phone.html", {"election": election, "form": form})
 
-            # create otp and send
             otp = form.create_otp()
             message = f"Kakasa Voting OTP: {otp.code}. Expires in 5 minutes."
             ok, resp = send_sms(phone, message)
@@ -116,7 +137,7 @@ def verify_phone_otp(request, election_id: int, phone: str):
 
     phone = _normalize_phone(phone)
 
-    # ✅ Extra protection: if phone already voted, block verification too
+    # ✅ if already voted, block verification too
     if _phone_already_voted(election, phone):
         messages.error(request, "This phone number has already voted in this election.")
         return redirect("login", election_id=election.id)
@@ -124,10 +145,9 @@ def verify_phone_otp(request, election_id: int, phone: str):
     if request.method == "POST":
         form = OTPVerifyForm(request.POST, election=election)
         if form.is_valid():
-            # Ensure the phone in the form is same normalized phone
             posted_phone = _normalize_phone(form.cleaned_data.get("phone", ""))
 
-            # ✅ Block if posted phone already voted (double safety)
+            # double safety
             if _phone_already_voted(election, posted_phone):
                 messages.error(request, "This phone number has already voted in this election.")
                 return redirect("login", election_id=election.id)
@@ -136,7 +156,7 @@ def verify_phone_otp(request, election_id: int, phone: str):
             otp.is_used = True
             otp.save(update_fields=["is_used"])
 
-            session = VotingSession.create_for_phone(phone=posted_phone, election=election, minutes=30)
+            session = VotingSession.create_for_phone(phone=posted_phone, election=election, minutes=30)  # :contentReference[oaicite:6]{index=6}
             return redirect("ballot", token=session.token)
     else:
         form = OTPVerifyForm(election=election, initial={"phone": phone})
@@ -145,7 +165,10 @@ def verify_phone_otp(request, election_id: int, phone: str):
 
 
 def ballot(request, token: str):
-    session = get_object_or_404(VotingSession.objects.select_related("election", "voter"), token=token)
+    session = get_object_or_404(
+        VotingSession.objects.select_related("election", "voter"),
+        token=token,
+    )
 
     if not session.is_valid():
         messages.error(request, "Session expired. Please login again.")
@@ -154,32 +177,48 @@ def ballot(request, token: str):
     election = session.election
     positions = Position.objects.filter(election=election).order_by("sort_order", "name")
 
+    # Candidates: one query
+    all_candidates = (
+        Candidate.objects.filter(election=election, is_active=True)
+        .select_related("position")
+        .order_by("full_name")
+    )
+
+    candidates_by_position: dict[int, list[Candidate]] = {}
+    for c in all_candidates:
+        candidates_by_position.setdefault(c.position_id, []).append(c)
+
+    # Vote counts: one query
+    vote_counts = (
+        Vote.objects.filter(election=election)
+        .values("position_id", "candidate_id")
+        .annotate(cnt=Count("id"))
+    )
+    vote_count_map = {(row["position_id"], row["candidate_id"]): row["cnt"] for row in vote_counts}
+
+    # Existing votes for this voter/phone: prefetch once for speed
+    existing_votes_map: dict[int, Vote] = {}
+    if session.voter_id:
+        qs = Vote.objects.filter(election=election, voter=session.voter)
+    else:
+        qs = Vote.objects.filter(election=election, voter_phone=_normalize_phone(session.phone or ""))
+
+    for v in qs.select_related("candidate", "position"):
+        existing_votes_map[v.position_id] = v
+
     position_blocks = []
     for pos in positions:
-        candidates = list(
-            Candidate.objects.filter(election=election, position=pos, is_active=True).order_by("full_name")
-        )
-
-        # attach vote counts
+        candidates = candidates_by_position.get(pos.id, [])
         for c in candidates:
-            c.vote_count = Vote.objects.filter(election=election, position=pos, candidate=c).count()
+            c.vote_count = vote_count_map.get((pos.id, c.id), 0)
 
-        # find existing vote for this position (so radio pre-check works)
-        if session.voter_id:
-            existing_vote = Vote.objects.filter(election=election, position=pos, voter=session.voter).first()
-        else:
-            existing_vote = Vote.objects.filter(election=election, position=pos, voter_phone=session.phone).first()
-
+        existing_vote = existing_votes_map.get(pos.id)
         position_blocks.append({"position": pos, "candidates": candidates, "existing_vote": existing_vote})
 
     return render(
         request,
         "app/ballot.html",
-        {
-            "election": election,
-            "session": session,
-            "position_blocks": position_blocks,
-        },
+        {"election": election, "session": session, "position_blocks": position_blocks},
     )
 
 
@@ -192,6 +231,12 @@ def submit_ballot(request, token: str):
     if not session.is_valid():
         messages.error(request, "Session expired. Please login again.")
         return redirect("login", election_id=session.election_id)
+
+    # ✅ Safety: block phone session if already voted (prevents session reuse edge cases)
+    if not session.voter_id and session.phone:
+        if _phone_already_voted(session.election, session.phone):
+            messages.error(request, "This phone number has already voted in this election.")
+            return redirect("success")
 
     helper = SubmitBallotHelper(session=session)
     created, already, errors = helper.save_votes(request.POST)
