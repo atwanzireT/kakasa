@@ -1,0 +1,62 @@
+{% extends "app/base.html" %}
+{% block title %}Leaderboard • {{ election.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-4">
+  <div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Leaderboard</h1>
+      <p class="text-slate-600 mt-1">Election: <span class="font-semibold">{{ election.name }}</span></p>
+    </div>
+  </div>
+
+  <div class="space-y-8">
+    {% for item in leaderboard %}
+      <section class="bg-white border rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-slate-900">{{ item.position.name }}</h2>
+          <div class="text-sm text-slate-500">Total votes: <span class="font-semibold">{{ item.total_votes }}</span></div>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500 border-b">
+                <th class="py-2 pr-3">Rank</th>
+                <th class="py-2 pr-3">Candidate</th>
+                <th class="py-2 pr-3">Votes</th>
+                <th class="py-2 pr-3">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in item.rows %}
+                <tr class="border-b last:border-b-0">
+                  <td class="py-2 pr-3 font-semibold">{{ forloop.counter }}</td>
+                  <td class="py-2 pr-3">
+                    <div class="font-semibold text-slate-900">{{ c.full_name }}</div>
+                    {% if c.university or c.study_year %}
+                      <div class="text-xs text-slate-500">
+                        {{ c.university }}{% if c.university and c.study_year %} • {% endif %}{% if c.study_year %}Year {{ c.study_year }}{% endif %}
+                      </div>
+                    {% endif %}
+                  </td>
+                  <td class="py-2 pr-3 font-semibold">{{ c.votes_count }}</td>
+                  <td class="py-2 pr-3">
+                    {% if item.total_votes %}
+                      {% widthratio c.votes_count item.total_votes 100 %}%
+                    {% else %}
+                      0%
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="py-4 text-slate-500">No candidates found for this position.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

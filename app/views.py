@@ -255,3 +255,60 @@ def submit_ballot(request, token: str):
 
 def success(request):
     return render(request, "app/success.html")
+
+def election_leaderboard_by_position(election_id: int):
+    election = Election.objects.get(id=election_id)
+
+    positions = (
+        Position.objects
+        .filter(election=election)
+        .order_by("sort_order", "name")
+    )
+
+    data = []
+    for pos in positions:
+        candidates = (
+            Candidate.objects
+            .filter(election=election, position=pos, is_active=True)
+            .annotate(votes_count=Count("votes"))  # votes is related_name on Vote.candidate
+            .order_by("-votes_count", "full_name")
+        )
+
+        total_votes_for_position = sum(c.votes_count for c in candidates)
+        data.append({
+            "position": pos,
+            "total_votes": total_votes_for_position,
+            "candidates": candidates,
+        })
+
+    return election, data
+
+from django.shortcuts import get_object_or_404, render
+from django.db.models import Count
+from .models import Election, Position, Candidate
+
+def election_leaderboard(request, election_id):
+    election = get_object_or_404(Election, id=election_id)
+
+    positions = Position.objects.filter(election=election).order_by("sort_order", "name")
+
+    leaderboard = []
+    for pos in positions:
+        candidates = (
+            Candidate.objects
+            .filter(election=election, position=pos, is_active=True)
+            .annotate(votes_count=Count("votes"))
+            .order_by("-votes_count", "full_name")
+        )
+        total_votes = sum(c.votes_count for c in candidates)
+
+        leaderboard.append({
+            "position": pos,
+            "total_votes": total_votes,
+            "rows": candidates,
+        })
+
+    return render(request, "app/leaderboard.html", {
+        "election": election,
+        "leaderboard": leaderboard,
+    })

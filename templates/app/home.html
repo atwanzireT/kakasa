@@ -81,13 +81,25 @@
                 </div>
               </div>
 
-              <a href="{% url 'login' e.id %}"
-                 class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-4 py-2 rounded-lg transition-all duration-200 group">
-                <span>Open</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </a>
+              <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                <a href="{% url 'login' e.id %}"
+                   class="inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-4 py-2 rounded-lg transition-all duration-200 group">
+                  <span>Open</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+
+                <a href="{% url 'election_leaderboard' e.id %}"
+                   class="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-900 font-semibold px-4 py-2 rounded-lg border border-gray-200 transition-all duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 11V3H7v8h4zm6 8V3h-4v16h4zM7 21v-6H3v6h4z" />
+                  </svg>
+                  Leaderboard
+                </a>
+              </div>
+
             </div>
           </div>
         {% endfor %}
@@ -110,21 +122,30 @@
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
         <h2 class="font-semibold text-green-700">Recent Elections</h2>
       </div>
+
       <div class="divide-y divide-gray-100">
         {% for e in all_elections|slice:":8" %}
           {% if e not in open_elections %}
             <div class="p-4 hover:bg-gray-50 transition-colors">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between gap-3">
                 <div>
                   <div class="font-medium text-gray-900">{{ e.name }}</div>
                   <div class="text-xs text-gray-500 mt-1">{{ e.created_at|date:"F j, Y" }}</div>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
-                  {% if e.status == 'closed' %}bg-gray-100 text-gray-600
-                  {% elif e.status == 'open' %}bg-green-100 text-green-700
-                  {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                  {{ e.get_status_display }}
-                </span>
+
+                <div class="flex items-center gap-2">
+                  <a href="{% url 'election_leaderboard' e.id %}"
+                     class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-800 transition">
+                    Leaderboard
+                  </a>
+
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                    {% if e.status == 'closed' %}bg-gray-100 text-gray-600
+                    {% elif e.status == 'open' %}bg-green-100 text-green-700
+                    {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                    {{ e.get_status_display }}
+                  </span>
+                </div>
               </div>
             </div>
           {% endif %}

@@ -11,4 +11,5 @@ urlpatterns = [
     path("ballot/<str:token>/submit/", views.submit_ballot, name="submit_ballot"),
 
     path("success/", views.success, name="success"),
+    path("elections/<int:election_id>/leaderboard/", views.election_leaderboard, name="election_leaderboard"),
 ]
